@@ -26,9 +26,9 @@ end
 
 
 # calls simpson() parallely in [lowerBound, upperBound] bracekts.
-def simpsonParallel(lowerBound, upperBound, samples, proc1)
-    noOfThreads = 1#java.lang.Runtime.getRuntime.availableProcessors
-    puts "'#{noOfThreads}' threads has been created"
+def simpsonParallel(lowerBound, upperBound, samples, proc1, noOfThreads)
+    #noOfThreads = java.lang.Runtime.getRuntime.availableProcessors
+    #puts "'#{noOfThreads}' threads has been created"
     samples = samples/noOfThreads     # calculate sample size for one thread
     chunkSize = 1.0*(upperBound - lowerBound)/noOfThreads
     sol = 0.0
@@ -49,12 +49,28 @@ def simpsonParallel(lowerBound, upperBound, samples, proc1)
     return sol
 end
 
+def test(a, b, n, testProc, noOfThreads, filePath)
+    start = Time.now
+    var = simpsonParallel(a, b, n, testProc, noOfThreads)
+    finish = Time.now
+    diff = finish - start
+    puts "threads: #{noOfThreads}     step size: #{n}    time: #{diff}\n"
 
+    File.open(filePath, "a") do |line|
+        line.write("#{noOfThreads}  #{n} #{diff}\n")
+    end
 
-start = Time.now
-var = simpsonParallel(0, 10, 80000000, proc{ |x| x*x*x*x-x*x+2*x} )
-finish = Time.now
-diff = finish - start
-puts "result = #{var}"
-puts "time = #{diff}"
+end
 
+# automate the testing
+def performanceTest(maxThreads, maxSteps, filePath)
+    v = maxSteps / 1000000
+    for threads in 1..(maxThreads)
+        for k in 1..v
+            steps = k * 10000
+            test(0, 10, steps, proc{ |x| x*x*x*x-x*x+2*x}, threads, filePath)
+        end
+    end
+end
+
+performanceTest(3, 500000000, "/home/lahiru/performanceTest/out.txt")
